@@ -1,0 +1,26 @@
+import {test,expect} from '@playwright/test';
+test('main local flows and responsive layout',async({page})=>{
+ const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('/');await expect(page.getByText('Find your kind of')).toBeVisible();
+ const nav=async name=>page.locator('nav:visible').getByRole('button',{name,exact:true}).click();
+ await page.getByRole('button',{name:'React to post',exact:true}).first().click();
+ await page.getByRole('button',{name:'Save post',exact:true}).first().click();
+ await page.getByRole('button',{name:'Follow',exact:true}).first().click();
+ await nav('Create');await page.getByLabel('Caption',{exact:true}).fill('A test moment worth sharing');
+ await page.getByRole('button',{name:'Save draft',exact:true}).click();
+ await page.getByLabel('Upload local media').setInputFiles({name:'tiny.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jS1kAAAAASUVORK5CYII=','base64')});
+ await expect(page.getByAltText('Local upload preview')).toBeVisible();
+ await page.getByRole('button',{name:'Preview',exact:true}).click();
+ await page.getByRole('button',{name:'Publish post',exact:false}).click();
+ await expect(page.getByText('A test moment worth sharing',{exact:false}).first()).toBeVisible();
+ await page.getByRole('button',{name:'Comment on post',exact:true}).first().click();
+ await page.getByLabel('Comment',{exact:true}).fill('Love this little moment');await page.getByRole('button',{name:'Send comment',exact:true}).click();
+ await expect(page.getByText('Love this little moment')).toBeVisible();await page.getByRole('button',{name:'Close dialog'}).click();
+ await nav('Profile');await page.getByRole('button',{name:'Edit profile'}).click();await page.getByLabel('Display name',{exact:true}).fill('Alex Test');await page.getByRole('button',{name:'Save profile'}).click();
+ await page.reload();await nav('Profile');await expect(page.getByRole('heading',{name:'Alex Test'})).toBeVisible();
+ await nav('Chats');await page.getByRole('button',{name:/June Park.*Found|June Park.*light/}).click();await page.getByLabel('Message',{exact:true}).fill('See you Saturday!');await page.getByRole('button',{name:'Send message',exact:true}).click();await expect(page.getByText('See you Saturday!')).toBeVisible();await page.getByRole('button',{name:'React to message'}).last().click();
+ await page.getByRole('button',{name:'Ask MOVA',exact:true}).first().click();await page.getByRole('button',{name:'Help me organise this appointment'}).click();await page.getByRole('button',{name:'Approve demo action'}).click();await expect(page.getByText('Approved locally · no external action taken')).toBeVisible();
+ await nav('Feed');await page.getByRole('button',{name:'Share post',exact:true}).first().click();await page.getByRole('button',{name:'June Park',exact:true}).click();
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+ await page.screenshot({path:`tests/${test.info().project.name}.png`,fullPage:false});expect(errors).toEqual([]);
+});
