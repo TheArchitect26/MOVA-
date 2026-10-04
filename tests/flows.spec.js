@@ -1,7 +1,7 @@
 import {test,expect} from '@playwright/test';
 test('main local flows and responsive layout',async({page})=>{
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
- await page.goto('/');await expect(page.getByText('Find your kind of')).toBeVisible();
+ await page.goto('/');await expect(page.getByText('Find your kind of')).toBeVisible();await page.screenshot({path:`tests/${test.info().project.name}-feed.png`,fullPage:false});
  const nav=async name=>page.locator('nav:visible').getByRole('button',{name,exact:true}).click();
  await page.getByRole('button',{name:'React to post',exact:true}).first().click();
  await page.getByRole('button',{name:'Save post',exact:true}).first().click();
