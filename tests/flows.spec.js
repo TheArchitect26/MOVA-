@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {videoFixture} from './video-fixture.js';
 test('main local flows and responsive layout',async({page})=>{
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto('/');await expect(page.getByText('Find your kind of')).toBeVisible();await page.screenshot({path:`tests/${test.info().project.name}-feed.png`,fullPage:false});
@@ -46,4 +47,10 @@ test('account UI persists posts and exchanges real messages',async({page,playwri
  const chats=await (await bob.get('/api/conversations')).json();expect(chats.chats[0].messages[0].text).toBe('A real message from my account');await bob.post('/api/conversations/'+chats.chats[0].id+'/messages',{data:{text:'And a real reply!'}});await expect(page.getByText('And a real reply!')).toBeVisible({timeout:12000});
  await page.getByRole('button',{name:'Ask MOVA',exact:true}).first().click();await page.getByRole('button',{name:'Draft a reply',exact:true}).click();await page.getByRole('button',{name:'Approve demo action'}).click();await expect(page.getByText('Approved locally · no external action taken')).toBeVisible();
  await page.getByRole('button',{name:'Sign out',exact:true}).click();await expect(page.getByRole('button',{name:'Sign in',exact:true})).toBeVisible();await expect(page.getByText('My durable account post '+suffix,{exact:false})).toHaveCount(0);await bob.dispose();
+});
+
+test('local video previews and published playback',async({page})=>{
+ await page.goto('/');await page.locator('nav:visible').getByRole('button',{name:'Create',exact:true}).click();await page.getByRole('button',{name:'Photo or video',exact:true}).click();await page.getByLabel('Caption',{exact:true}).fill('A tiny motion study');await page.getByLabel('Upload local media').setInputFiles({name:'motion.webm',mimeType:'video/webm',buffer:Buffer.from(videoFixture,'base64')});
+ await expect.poll(()=>page.locator('.local-preview video').evaluate(v=>v.readyState)).toBeGreaterThan(0);await page.getByRole('button',{name:'Preview',exact:true}).click();await expect(page.locator('.post video')).toBeVisible();await page.getByRole('button',{name:/Publish post/}).click();await expect.poll(()=>page.locator('.feed-list video').evaluate(v=>v.readyState)).toBeGreaterThan(0);expect(await page.locator('.feed-list video').evaluate(async v=>{v.muted=true;await v.play();return v.videoWidth})).toBe(32);
+ await page.reload();await expect(page.locator('.feed-list video')).toBeVisible();
 });
